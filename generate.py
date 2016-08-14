@@ -11,7 +11,13 @@ import random
 import sh
 
 # Notes in a midi file are in the range [0, 120).
-kMaxNote = 120
+kMidiMiddleC = 60
+kMidiMaxNote = 120
+
+# There are 10 families of melodic midi instruments, each with 8 variations.
+# After midi instrument 80, we start on percussion.
+kMidiInstrumentFamilies = 10
+kMidiInstrumentFamilySize = 8
 
 def memoize(fn):
     class memo(dict):
@@ -29,9 +35,9 @@ Returns a pair (sample_rate, data) from that wav file, where sample_rate is
 the frequency in Hz of audio samples and data is a list of sample values.
 '''
 @memoize
-def generateWavData(note):
-    midi = Midi(1, instrument=0, tempo=90)
-    midi.seq_notes(NoteSeq([Note(note - 60)]), track=0)
+def generateWavData(instrument, note):
+    midi = Midi(1, instrument=instrument, tempo=90)
+    midi.seq_notes(NoteSeq([Note(note - kMidiMiddleC)]), track=0)
     (midi_filename, wav_filename) = ('temp.mid', 'temp.wav')
     midi.write(midi_filename)
     sh.timidity(midi_filename, '-Ow', '-o', wav_filename)
@@ -68,19 +74,22 @@ The result is a pair (frequencies, note), where frequencies is a
 because the default sample rate for wavs is 44100), and the output is a
 120-dimensional one-hot encoding of the note.
 '''
-def sampleLabeledData(note=None, progress=None):
+def sampleLabeledData(instrument=None, note=None, progress=None):
     # The distribution we're sampling from is parametrized by a note to play
     # and by progress, the time into the duration of the note from which we
     # sample the frequencies.
+    if instrument is None:
+        family = random.randint(0, kMidiInstrumentFamilies - 1)
+        instrument = kMidiInstrumentFamilySize * family
     if note is None:
-        note = random.randint(0, kMaxNote - 1)
+        note = random.randint(0, kMidiMaxNote - 1)
     if progress is None:
         progress = random.random()
     # Generate the actual training sample.
-    features = readSpectrum(generateWavData(note), progress)
+    features = readSpectrum(generateWavData(instrument, note), progress)
     return (
         numpy.reshape(features, (1, -1)),
-        numpy.reshape([int(x == note) for x in xrange(kMaxNote)], (1, -1)),
+        numpy.reshape([int(x == note) for x in xrange(kMidiMaxNote)], (1, -1)),
     )
 
 if __name__ == '__main__':

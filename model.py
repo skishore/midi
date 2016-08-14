@@ -40,7 +40,7 @@ with tf.Session() as sess:
     if False:
         saver.restore(sess, "model.ckpt.something")
 
-    for i in range(1000):
+    for i in range(10000):
         if i % 100 == 0:
             print('Iteration %d' % i)
 
