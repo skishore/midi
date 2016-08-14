@@ -18,7 +18,7 @@ Creates a wav file of a piano playing `note` and writes it to `wav_filename`.
 '''
 def generateWavFile(note, wav_filename):
     midi = Midi(1, instrument=0, tempo=90)
-    midi.seq_notes(NoteSeq([note]), track=0)
+    midi.seq_notes(NoteSeq([Note(note - 60)]), track=0)
     midi_filename = 'temp.mid'
     midi.write(midi_filename)
     sh.timidity(midi_filename, '-Ow', '-o', wav_filename)
@@ -40,10 +40,11 @@ def readSpectrum(wav_filename, progress):
     (sample_rate, data) = wavfile.read(wav_filename)
     samples = data.T[0]
     window = sample_rate / 10
-    start = int(len(samples) * progress) - window/2
+    # Sample from between the first 0.1s and 0.9s of the note.
+    start = (0.1 + 0.8 * progress) * min(len(samples), sample_rate) - window/2
     start = min(max(start, 0), len(samples) - window)
     fragment = samples[start:start + window]
-    return tuple(map(abs, fft(fragment)[:window/2]))
+    return map(abs, fft(fragment)[:window/2])
 
 '''
 Generates a single training sample for our note-classifying network.
@@ -59,10 +60,9 @@ def sampleLabeledData(note=None, progress=None):
     if note is None:
         note = random.randint(0, kMaxNote - 1)
     if progress is None:
-        progress = 0.1 + 0.8 * random.random()
+        progress = random.random()
     # Generate the actual training sample.
     wav_filename = 'temp.wav'
-    generateWavFile(Note(note), wav_filename)
+    generateWavFile(note, wav_filename)
     features = readSpectrum(wav_filename, progress)
-    sh.rm(wav_filename)
-    return (features, tuple(int(x == note) for x in xrange(kMaxNote)))
+    return (features, (int(x == note) for x in xrange(kMaxNote)))
