@@ -15,16 +15,31 @@ import sh
 # Notes in a midi file are in the range [0, 120).
 kMaxNote = 120
 
+def memoize(fn):
+    class memo(dict):
+        def __call__(self, *args, **kwargs):
+            return self[(args, frozenset(kwargs.items()))]
+        def __missing__(self, key):
+            (args, kwargs) = key
+            self[key] = fn(*args, **dict(kwargs))
+            return self[key]
+    return memo()
+
 '''
 Creates a wav file of a piano playing `note` and writes it to `wav_filename`.
+Returns a pair (sample_rate, data) from that wav file, where sample_rate is
+the frequency in Hz of audio samples and data is a list of sample values.
 '''
-def generateWavFile(note, wav_filename):
+@memoize
+def generateWavData(note):
     midi = Midi(1, instrument=0, tempo=90)
     midi.seq_notes(NoteSeq([Note(note - 60)]), track=0)
-    midi_filename = 'temp.mid'
+    (midi_filename, wav_filename) = ('temp.mid', 'temp.wav')
     midi.write(midi_filename)
     sh.timidity(midi_filename, '-Ow', '-o', wav_filename)
-    sh.rm(midi_filename)
+    (sample_rate, data) = wavfile.read(wav_filename)
+    sh.rm(midi_filename, wav_filename)
+    return (sample_rate, data.T[0])
 
 '''
 Plots the given sequence with matplotlib.
@@ -38,9 +53,8 @@ Reads a wav file and returns the spectrum of a 0.1-second interval that is
 `progress` of the way through the file (e.g., if `progress` were 0.5, halfway
 through the file.)
 '''
-def readSpectrum(wav_filename, progress):
-    (sample_rate, data) = wavfile.read(wav_filename)
-    samples = data.T[0]
+def readSpectrum(wav_data, progress):
+    (sample_rate, data) = wav_data
     window = sample_rate / 10
     # Sample from between the first 0.1s and 0.9s of the note.
     start = (0.1 + 0.8 * progress) * min(len(samples), sample_rate) - window/2
@@ -64,10 +78,7 @@ def sampleLabeledData(note=None, progress=None):
     if progress is None:
         progress = random.random()
     # Generate the actual training sample.
-    wav_filename = 'temp.wav'
-    generateWavFile(note, wav_filename)
-    features = readSpectrum(wav_filename, progress)
-    sh.rm(wav_filename)
+    features = readSpectrum(generateWavData(note), progress)
     return (
         np.reshape(features, (1, -1)),
         np.reshape([int(x == note) for x in xrange(kMaxNote)], (1, -1)),
