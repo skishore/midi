@@ -1,7 +1,5 @@
 #!/usr/local/bin/python
-import matplotlib.pyplot as plot
-
-import numpy as np
+import numpy
 
 from pyknon.genmidi import Midi
 from pyknon.music import Note, NoteSeq
@@ -45,6 +43,7 @@ def generateWavData(note):
 Plots the given sequence with matplotlib.
 '''
 def plotSequence(sequence):
+    import matplotlib.pyplot as plot
     plot.plot(sequence)
     plot.show(block=True)
 
@@ -58,7 +57,7 @@ def readSpectrum(wav_data, progress):
     window = sample_rate / 10
     # Sample from between the first 0.1s and 0.9s of the note.
     start = (0.1 + 0.8 * progress) * min(len(samples), sample_rate) - window/2
-    start = min(max(start, 0), len(samples) - window)
+    start = min(max(int(start), 0), len(samples) - window)
     fragment = samples[start:start + window]
     return map(abs, fft(fragment)[:window/2])
 
@@ -80,9 +79,9 @@ def sampleLabeledData(note=None, progress=None):
     # Generate the actual training sample.
     features = readSpectrum(generateWavData(note), progress)
     return (
-        np.reshape(features, (1, -1)),
-        np.reshape([int(x == note) for x in xrange(kMaxNote)], (1, -1)),
+        numpy.reshape(features, (1, -1)),
+        numpy.reshape([int(x == note) for x in xrange(kMaxNote)], (1, -1)),
     )
 
 if __name__ == '__main__':
-    samplaLabeledData()
+    print sampleLabeledData()
