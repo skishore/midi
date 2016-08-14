@@ -54,7 +54,7 @@ Reads a wav file and returns the spectrum of a 0.1-second interval that is
 through the file.)
 '''
 def readSpectrum(wav_data, progress):
-    (sample_rate, data) = wav_data
+    (sample_rate, samples) = wav_data
     window = sample_rate / 10
     # Sample from between the first 0.1s and 0.9s of the note.
     start = (0.1 + 0.8 * progress) * min(len(samples), sample_rate) - window/2
