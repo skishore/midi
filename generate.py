@@ -1,6 +1,8 @@
 #!/usr/local/bin/python
 import matplotlib.pyplot as plot
 
+import numpy as np
+
 from pyknon.genmidi import Midi
 from pyknon.music import Note, NoteSeq
 
@@ -29,7 +31,7 @@ Plots the given sequence with matplotlib.
 '''
 def plotSequence(sequence):
     plot.plot(sequence)
-    plot.show()
+    plot.show(block=True)
 
 '''
 Reads a wav file and returns the spectrum of a 0.1-second interval that is
@@ -65,4 +67,8 @@ def sampleLabeledData(note=None, progress=None):
     wav_filename = 'temp.wav'
     generateWavFile(note, wav_filename)
     features = readSpectrum(wav_filename, progress)
-    return (features, (int(x == note) for x in xrange(kMaxNote)))
+    sh.rm(wav_filename)
+    return (
+        np.reshape(features, (1, -1)),
+        np.reshape([int(x == note) for x in xrange(kMaxNote)], (1, -1))
+    )

@@ -1,5 +1,7 @@
 from __future__ import absolute_import, division, print_function
 
+import generate
+
 import tensorflow as tf
 import numpy as np
 
@@ -10,7 +12,7 @@ def model(X, w):
     # NOTE: there is a baked in cost function which performs softmax and cross entropy
     return tf.matmul(X, w)
 
-num_frequencies = 2500
+num_frequencies = 2205
 num_notes = 120
 
 X = tf.placeholder("float", [None, num_frequencies]) # create symbolic variables
@@ -32,9 +34,18 @@ with tf.Session() as sess:
     # you need to initialize all variables
     tf.initialize_all_variables().run()
 
-    for (frequencies, answer) in something:
+    for i in range(10):
+        (frequencies, answer) = generate.sampleLabeledData()
         # train
         sess.run(train_op, feed_dict={X: frequencies, Y: answer})
 
-    print(i, np.mean(np.argmax(teY, axis=1) ==
-                     sess.run(predict_op, feed_dict={X: teX, Y: teY})))
+    for i in range(10):
+        (frequencies, answer) = generate.sampleLabeledData()
+        predicted = sess.run(predict_op, feed_dict={X: frequencies, Y: answer})[0]
+        if np.argmax(answer) == predicted:
+            print('CORRECT!', np.argmax(answer))
+        else:
+            print('INCORRECT!', np.argmax(answer), predicted)
+
+    # print(i, np.mean(np.argmax(teY, axis=1) ==
+    #                  sess.run(predict_op, feed_dict={X: teX, Y: teY})))
