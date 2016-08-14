@@ -1,3 +1,4 @@
 pip install pyknon
+pip install sh
 brew install lame
 brew install timidity
