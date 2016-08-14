@@ -4,4 +4,6 @@
 *.mid
 .DS_Store
 
+# not sure what this is
+checkpoint
 model.ckpt.*
