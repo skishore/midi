@@ -29,12 +29,33 @@ train_op = tf.train.GradientDescentOptimizer(0.05).minimize(cost)
 # at predict time, evaluate the argmax of the logistic regression
 predict_op = tf.argmax(py_x, 1)
 
+saver = tf.train.Saver()
+
 # Launch the graph in a session
 with tf.Session() as sess:
     # you need to initialize all variables
     tf.initialize_all_variables().run()
 
-    for i in range(10):
+    # restore from checkpoint
+    if False:
+        saver.restore(sess, "model.ckpt.something")
+
+    for i in range(1000):
+        if i % 100 == 0:
+            print('Iteration %d' % i)
+
+            # Save the variables to disk.
+            save_path = saver.save(sess, "model.ckpt.%d" % i)
+            print("Model saved in file: %s" % save_path)
+
+            for i in range(10):
+                (frequencies, answer) = generate.sampleLabeledData()
+                predicted = sess.run(predict_op, feed_dict={X: frequencies, Y: answer})[0]
+                if np.argmax(answer) == predicted:
+                    print('CORRECT!', np.argmax(answer))
+                else:
+                    print('INCORRECT!', np.argmax(answer), predicted)
+
         (frequencies, answer) = generate.sampleLabeledData()
         # train
         sess.run(train_op, feed_dict={X: frequencies, Y: answer})

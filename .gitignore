@@ -1,4 +1,7 @@
 *.mp3
 *.pyc
 *.wav
+*.mid
 .DS_Store
+
+model.ckpt.*
