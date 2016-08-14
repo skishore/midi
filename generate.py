@@ -70,5 +70,8 @@ def sampleLabeledData(note=None, progress=None):
     sh.rm(wav_filename)
     return (
         np.reshape(features, (1, -1)),
-        np.reshape([int(x == note) for x in xrange(kMaxNote)], (1, -1))
+        np.reshape([int(x == note) for x in xrange(kMaxNote)], (1, -1)),
     )
+
+if __name__ == '__main__':
+    samplaLabeledData()
