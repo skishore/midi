@@ -1,3 +1,4 @@
+#!/usr/local/bin/python
 from scipy.fftpack import fft
 from scipy.io import wavfile
 
