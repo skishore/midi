@@ -93,4 +93,6 @@ def sampleLabeledData(instrument=None, note=None, progress=None):
     )
 
 if __name__ == '__main__':
-    print sampleLabeledData()
+    # print sampleLabeledData()
+    features = readSpectrum(generateWavData(0, 55), random.random())
+    plotSequence(features)
